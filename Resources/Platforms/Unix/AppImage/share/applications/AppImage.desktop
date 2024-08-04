@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=AppImage
+Comment=AppImage
+Exec=AppImage
+Icon=AppImage
+Categories=Development;

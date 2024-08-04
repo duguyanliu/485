@@ -1,0 +1,48 @@
+name: build-macos
+on:
+  schedule:
+    - cron: '0 0 * * *'
+#on:
+#  push:
+#    branches:
+#      - master
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-11, macos-12]
+        version: [5.15.2, 6.5.3]
+        arch: [clang_64]
+        include:
+          - version: 5.15.2
+            cmake-prefix-path: 'lib/cmake/Qt5'
+            modules: 'qtcharts'
+          - version: 6.5.3
+            cmake-prefix-path: 'lib/cmake/Qt6'
+            moudles: 'qtcharts qtserialbus qtserialport qtwebsockets'
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+      - name: install qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==3.1.*'
+          version: ${{ matrix.version }}
+          target: 'desktop'
+          arch: ${{ matrix.arch }}
+          dir: ${{ github.workspace }}
+          host: 'mac'
+          modules: ${{ matrix['moudles']}}
+      - name: build for macos
+        run: |
+          # brew uninstall --force node
+          # brew unlink unixodbc
+          # brew install libiodbc
+          mkdir -p /Applications/Postgres.app/Contents/Versions/14/lib
+          ln -s /usr/local/Cellar/postgresql@14/14.10/lib/postgresql@14/libpq.5.14.dylib /Applications/Postgres.app/Contents/Versions/14/lib/libpq.5.dylib
+          mkdir build
+          cd build
+          cmake -DWITH_TOOLS:BOOL=OFF -DCMAKE_PREFIX_PATH='${{ github.workspace }}/Qt/${{ matrix.version }}/${{ matrix.arch }}/${{ matrix.cmake-prefix-path }}' -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" ../
+          cmake --build . --target xTools
